@@ -25,6 +25,10 @@
 
 ## 怎么用？
 
+1. clone/下载源码到本地
+2. 安装源码包里的微信客户端（你以前的版本和这个不一致的都需要安装这个）
+3. 执行源码中的test.py
+
 目前提供pyd和依赖的相关文件，通过python直接import即可使用，目录里的test.py即是调用示例。如下：
 
     from WechatPCAPI import WechatPCAPI
