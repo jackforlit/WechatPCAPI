@@ -6,6 +6,11 @@
 **如果帮到你，帮我点个star。**
 遇到问题可以提Issues，或关注公众号“燕幕自安”联系我。
 
+## 20191203更新
+
+1. 新增群成员获取接口
+2. 修改了test示例
+
 ## 功能列表
 
 目前支持：
@@ -29,52 +34,7 @@
 2. 安装源码包里的微信客户端（你以前的版本和这个不一致的都需要安装这个）
 3. 执行源码中的test.py
 
-目前提供pyd和依赖的相关文件，通过python直接import即可使用，目录里的test.py即是调用示例。如下：
-
-    from WechatPCAPI import WechatPCAPI
-    import time
-
-
-    # 接收消息的回调函数，可自行定义
-    def on_message(message):
-        print(message)
-
-
-    def main():
-        # 初始化wx实例
-        wx_inst = WechatPCAPI(on_message=on_message)
-
-        # 启动微信 目前仅支持微信V2.7.1.82
-        wx_inst.start_wechat(block=True)
-
-        # 等待登陆成功，此时需要人为扫码登录微信
-        while not wx_inst.get_myself():
-            time.sleep(5)
-
-        # 登录成功了
-        print(wx_inst.get_myself())
-
-        # 以下尝试发送各类消息给文件传输助手，可以换成任何人的wx_id
-        wx_inst.send_text(to_user='filehelper', msg='777888999')
-        wx_inst.send_link_card(
-            to_user='filehelper',
-            title='我的博客',
-            desc='我的博客，红领巾技术分享网站',
-            target_url='http://www.honglingjin.online/',
-            img_url=''
-        )
-        wx_inst.send_img(to_user='filehelper', img_abspath=r'C:\Users\Leon\Pictures\1.jpg')
-        wx_inst.send_file(to_user='filehelper', file_abspath=r'C:\Users\Leon\Desktop\1.txt')
-        wx_inst.send_gif(to_user='filehelper', gif_abspath=r'C:\Users\Leon\Desktop\08.gif')
-        wx_inst.send_card(to_user='filehelper', wx_id=wx_inst.wx_id)
-
-        time.sleep(10)
-        # 更新所有好友信息，数据会通过上面的回调函数返回
-        wx_inst.update_frinds()
-
-
-    if __name__ == '__main__':
-        main()
+目前提供pyd和依赖的相关文件，通过python直接import即可使用，目录里的test.py即是调用示例。
 
 ## 环境支持情况
 
@@ -86,11 +46,11 @@ python 3.7.4 理论上支持python3.7以后所有版本 不是该版本可能会
 
 ## 国内下载慢？
 
-```
-下载慢的话用百度网盘分享：
-链接：https://pan.baidu.com/s/1yADEwqht8hcTTjxpkW8DXw 
-提取码：rneo 
-```
+现在不支持百度网盘更新了，请进群获取最新版本代码和相关文件，有问题也可以在群里咨询讨论。
+
+**QQ群：579737590**
+
+![QQ群](https://github.com/Mocha-L/wechat_wegoing/blob/master/image/qq.png)
 
 ## 遇到问题？
 
