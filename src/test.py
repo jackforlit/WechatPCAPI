@@ -49,31 +49,34 @@ def main():
 
     time.sleep(10)
     wx_inst.send_text(to_user='filehelper', msg='777888999')
-    time.sleep(1)
-    wx_inst.send_link_card(
-        to_user='filehelper',
-        title='博客',
-        desc='我的博客，红领巾技术分享网站',
-        target_url='http://www.honglingjin.online/',
-        img_url='http://honglingjin.online/wp-content/uploads/2019/07/0-1562117907.jpeg'
-    )
-    time.sleep(1)
+    # time.sleep(1)
+    # wx_inst.send_link_card(
+    #     to_user='filehelper',
+    #     title='博客',
+    #     desc='我的博客，红领巾技术分享网站',
+    #     target_url='http://www.honglingjin.online/',
+    #     img_url='http://honglingjin.online/wp-content/uploads/2019/07/0-1562117907.jpeg'
+    # )
+    # time.sleep(1)
+    #
+    # wx_inst.send_img(to_user='filehelper', img_abspath=r'C:\Users\Leon\Pictures\1.jpg')
+    # time.sleep(1)
+    #
+    # wx_inst.send_file(to_user='filehelper', file_abspath=r'C:\Users\Leon\Desktop\1.txt')
+    # time.sleep(1)
+    #
+    # wx_inst.send_gif(to_user='filehelper', gif_abspath=r'C:\Users\Leon\Desktop\08.gif')
+    # time.sleep(1)
+    #
+    # wx_inst.send_card(to_user='filehelper', wx_id='gh_6ced1cafca19')
 
-    wx_inst.send_img(to_user='filehelper', img_abspath=r'C:\Users\Leon\Pictures\1.jpg')
-    time.sleep(1)
+    # 这个是获取群具体成员信息的，成员结果信息也从上面的回调返回
+    wx_inst.get_member_of_chatroom('22941059407@chatroom')
 
-    wx_inst.send_file(to_user='filehelper', file_abspath=r'C:\Users\Leon\Desktop\1.txt')
-    time.sleep(1)
+    # 新增@群里的某人的功能
+    wx_inst.send_text(to_user='22941059407@chatroom', msg='test for at someone', at_someone='wxid_6ij99jtd6s4722')
 
-    wx_inst.send_gif(to_user='filehelper', gif_abspath=r'C:\Users\Leon\Desktop\08.gif')
-    time.sleep(1)
-
-    wx_inst.send_card(to_user='filehelper', wx_id='gh_6ced1cafca19')
-
-    # 这个是获取群具体成员信息的，成员信息也从上面的回调返回
-    wx_inst.get_member_of_chatroom('18880790370@chatroom')
-
-    # 这个是更新所有好友、群、公众号信息的
+    # 这个是更新所有好友、群、公众号信息的，结果信息也从上面的回调返回
     # wx_inst.update_frinds()
 
 
