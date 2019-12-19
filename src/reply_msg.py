@@ -1,32 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 ###
-# #    File: reply_msg.py
-# #    Project: Mocha-L/WechatPCAPI 
-# #    Author: zzy
-# #    mail: elliot.bia.8989@outlook.com
-# #    github: https://github.com/elliot-bia
-# #    Date: 2019-12-09 14:59:42
-# #    LastEditors: zzy
-# #    LastEditTime: 2019-12-12 16:26:07
-# #    ---------------------------------
-# #    Description: 对Mocha-L的WechatPCAPI进行调用,  实现功能: 自动接受的个人信息, 指定群信息发送到指定admin微信, 并且通过回复序列号(空格)信息进行回复
 
-
-###
-# -*- coding: utf-8 -*-
-# @Time    : 2019/11/27 23:00
-# @Author  : Leon
-# @Email   : 1446684220@qq.com
-# @File    : test.py
-# @Desc    :
-# @Software: PyCharm
-
+# Webchat
 from WechatPCAPI import WechatPCAPI
 import time
 import logging
 from queue import Queue
-import threading
+import threading, requests
+
 
 logging.basicConfig(level=logging.INFO)
 queue_recved_message = Queue()
@@ -42,6 +24,56 @@ dict_remark_name = {}
 dict_msg_ID = {}
 # 全局
 ID_num = 0
+
+
+def get_coupon_info(original_tkl):
+    se = requests.session()
+    se.cookies['UM_distinctid'] = '16f0dd06c08480-0f27fcf58aeb138-4c302a7b-1fa400-16f0dd06c09f8'
+    se.cookies['CNZZDATA1261806159'] = '305133404-1576484760-%7C1576644781'
+    se.cookies['Hm_lvt_73f904bff4492e23046b74fe0d627b3d'] = '1576484763,1576640457'
+    se.cookies['PHPSESSID'] = 'b938uravn6ovrpk915qb1a83e9'
+    se.cookies['Hm_lpvt_73f904bff4492e23046b74fe0d627b3d'] = '1576646963'
+    se.cookies[
+        'tkdg_user_info'] = 'think%3A%7B%22id%22%3A%2246458%22%2C%22password%22%3A%2212892b74dcb71da900559b15bd2665ee%22%7D'
+    url = 'https://www.taokouling.com/index/tbtkltoitemid/'
+    headers = {
+        'Host': 'www.taokouling.com',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:71.0) Gecko/20100101 Firefox/71.0',
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'Accept-Language': 'zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2',
+        'Accept-Encoding': 'gzip, deflate',
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': '507',
+        'Origin': 'https://www.taokouling.com',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Connection': 'close',
+        'Referer': 'https://www.taokouling.com/index/tbtkltoitemid/'
+    }
+    datas = {
+        'tkl': original_tkl,
+        'zdgy': 'true',
+        'pid': 'mm_389810114_446200449_108517850497',
+        'tgdl': 'true'
+    }
+    res = se.post(url, data=datas, headers=headers)
+    res = res.json()
+    print(res['data'])
+    if 'error' in res['data']['tkl']:
+        return '该宝贝暂时没有找到内部返利通道！亲您可以换个宝贝试试。'
+    elif 'coupon_info' not in res['data']:
+        return '该宝贝暂时没有找到内部返利通道！亲您可以换个宝贝试试。'
+    else:
+        coupon_info = res['data']['coupon_info']
+        tkl = res['data']['tkl']
+        url = res['data']['url']
+        res_txt = '''
+    您的商品优惠信息如下：
+    【优惠券】%s 
+    请复制%s淘口令、打开淘宝APP下单
+    -----------------
+    【下单地址】%s
+        ''' % (coupon_info, tkl, url)
+        return res_txt
 
 
 def deal_remark_name(message):
@@ -83,9 +115,9 @@ def thread_handle_message(wx_inst):
 
                 # 进行回复
                 if (send_or_recv[0] == '0'): #and (from_wxid in admin_wx):
-
+                    from_msg = message.get('data', {}).get('msg', '')
+                    reply_msage = get_coupon_info(from_msg)
                     reply_msage_ID = from_wxid
-                    reply_msage = 'hello, world'
                     wx_inst.send_text(reply_msage_ID, str(reply_msage))
         except:
             pass
