@@ -7,7 +7,8 @@ from WechatPCAPI import WechatPCAPI
 import time
 import logging
 from queue import Queue
-import threading, requests
+import threading, requests, re
+from bs4 import BeautifulSoup
 
 
 logging.basicConfig(level=logging.INFO)
@@ -26,7 +27,57 @@ dict_msg_ID = {}
 ID_num = 0
 
 
-def get_coupon_info(original_tkl):
+def get_url_coupon_info(url):
+    try:
+        res = requests.get(url)
+        soup = BeautifulSoup(res.text, 'lxml')
+        title = soup.title.text
+        print(title)
+    except:
+        title = ''
+
+    if '&' in url:
+        url_group = url.split('?')
+        param = url_group[1].split('&')
+        product = param[0].split('=')
+        product_id = product[1]
+    else:
+        url_group = url.split('?')
+        product = url_group[1].split('=')
+        product_id = product[1]
+
+    apikey = 'eqYJsXQOcP'
+    siteid = '446200449'
+    adzoneid = '108517850497'
+    uid = '140228417'
+
+    url = 'https://api.taokouling.com/tkl/TbkPrivilegeGet?apikey=' + apikey + '&itemid=' + product_id + '&siteid=' + siteid + '&adzoneid=' + adzoneid + '&uid=' + uid
+    se = requests.session()
+    res = se.get(url)
+    res = res.json()
+    print(res)
+
+    # mm_coupon_info situation need to check
+    if ('msg' in res and ('下架' in res['msg'] or '非淘宝客' in res['msg'])) or 'coupon_info' not in res['result']['data']:
+        res_txt = '''%s
+-----------------
+该宝贝暂时没有找到内部返利通道！亲您可以换个宝贝试试。        
+        ''' % title
+    else:
+        coupon_info = res['result']['data']['coupon_info']
+        coupon_url = res['result']['data']['coupon_click_url']
+        res_txt = '''恭喜您，已找到隐藏优惠！！
+
+%s
+
+【优惠券】%s 
+-----------------
+【优惠券地址】%s
+    ''' % (title, coupon_info, coupon_url)
+    return res_txt
+
+def get_tkl_coupon_info(original_tkl):
+    title = re.search(r'【.*】', original_tkl).group().replace(u'【', '').replace(u'】', '')
     se = requests.session()
     se.cookies['UM_distinctid'] = '16f0dd06c08480-0f27fcf58aeb138-4c302a7b-1fa400-16f0dd06c09f8'
     se.cookies['CNZZDATA1261806159'] = '305133404-1576484760-%7C1576644781'
@@ -58,22 +109,26 @@ def get_coupon_info(original_tkl):
     res = se.post(url, data=datas, headers=headers)
     res = res.json()
     print(res['data'])
-    if 'error' in res['data']['tkl']:
-        return '该宝贝暂时没有找到内部返利通道！亲您可以换个宝贝试试。'
-    elif 'coupon_info' not in res['data']:
-        return '该宝贝暂时没有找到内部返利通道！亲您可以换个宝贝试试。'
+    if 'error' in res['data']['tkl'] or 'coupon_info' not in res['data']:
+        res_txt = '''
+%s
+-----------------
+该宝贝暂时没有找到内部返利通道！亲您可以换个宝贝试试。        
+        ''' % title
     else:
         coupon_info = res['data']['coupon_info']
         tkl = res['data']['tkl']
         url = res['data']['url']
-        res_txt = '''
-    您的商品优惠信息如下：
-    【优惠券】%s 
-    请复制%s淘口令、打开淘宝APP下单
-    -----------------
-    【下单地址】%s
-        ''' % (coupon_info, tkl, url)
-        return res_txt
+        res_txt = '''恭喜您，已找到隐藏优惠！！
+    
+%s
+
+【优惠券】%s 
+请复制%s淘口令、打开淘宝APP下单
+-----------------
+【下单地址】%s
+        ''' % (title, coupon_info, tkl, url)
+    return res_txt
 
 
 def deal_remark_name(message):
@@ -116,12 +171,33 @@ def thread_handle_message(wx_inst):
                 # 进行回复
                 if (send_or_recv[0] == '0'): #and (from_wxid in admin_wx):
                     from_msg = message.get('data', {}).get('msg', '')
-                    reply_msage = get_coupon_info(from_msg)
+                    if r'http://' in from_msg or r'https://' in from_msg:
+                        reply_msage = get_url_coupon_info(from_msg)
+                    elif '【' in from_msg and '】' in from_msg:
+                        reply_msage = get_tkl_coupon_info(from_msg)
                     reply_msage_ID = from_wxid
                     wx_inst.send_text(reply_msage_ID, str(reply_msage))
         except:
             pass
 
+        try:
+            if 'msg::chatroom' in message.get('type'):
+                # 这里是判断收到的是消息 不是别的响应
+                send_or_recv = message.get('data', {}).get('send_or_recv', '')
+                data_type = message.get('data', {}).get('data_type', '')
+                if send_or_recv[0] == '0':
+                    if data_type[0] == '1':
+                        from_msg = message.get('data', {}).get('msg', '')
+                        from_wxid = message.get('data', {}).get('from_member_wxid', '')
+                        from_chatroom_wxid = message.get('data', {}).get('from_chatroom_wxid', '')
+                        if r'http://' in from_msg or r'https://' in from_msg:
+                            reply_msage = get_url_coupon_info(from_msg)
+                        elif '【' in from_msg and '】' in from_msg:
+                            reply_msage = get_tkl_coupon_info(from_msg)
+                        wx_inst.send_text(to_user=from_chatroom_wxid, msg=reply_msage,
+                                          at_someone=from_wxid)
+        except:
+            pass
 
 def main():
     wx_inst = WechatPCAPI(on_message=on_message, log=logging)
