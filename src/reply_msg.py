@@ -9,6 +9,7 @@ import logging
 from queue import Queue
 import threading, requests, re
 from bs4 import BeautifulSoup
+from configparser import ConfigParser
 
 
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +26,10 @@ dict_remark_name = {}
 dict_msg_ID = {}
 # 全局
 ID_num = 0
+# 读取帮助文档所在位置
+cp = ConfigParser()
+cp.read('basic_info.cfg')
+help_path = cp.get('Info', 'help_path')
 
 
 def get_url_coupon_info(url):
@@ -171,12 +176,17 @@ def thread_handle_message(wx_inst):
                 # 进行回复
                 if (send_or_recv[0] == '0'): #and (from_wxid in admin_wx):
                     from_msg = message.get('data', {}).get('msg', '')
+                    reply_msage_ID = from_wxid
+                    # 回复用户消息
                     if r'http://' in from_msg or r'https://' in from_msg:
                         reply_msage = get_url_coupon_info(from_msg)
                     elif '【' in from_msg and '】' in from_msg:
                         reply_msage = get_tkl_coupon_info(from_msg)
-                    reply_msage_ID = from_wxid
-                    wx_inst.send_text(reply_msage_ID, str(reply_msage))
+                    # 使用方法说明
+                    if '帮助' in from_msg or 'help' in from_msg:
+                        wx_inst.send_img(reply_msage_ID, help_path)
+                    else:
+                        wx_inst.send_text(reply_msage_ID, str(reply_msage))
         except:
             pass
 
@@ -194,8 +204,14 @@ def thread_handle_message(wx_inst):
                             reply_msage = get_url_coupon_info(from_msg)
                         elif '【' in from_msg and '】' in from_msg:
                             reply_msage = get_tkl_coupon_info(from_msg)
-                        wx_inst.send_text(to_user=from_chatroom_wxid, msg=reply_msage,
-                                          at_someone=from_wxid)
+                            # 使用方法说明
+                        if '帮助' in from_msg or 'help' in from_msg:
+                            wx_inst.send_text(to_user=from_chatroom_wxid, msg='↓请查看帮助文档↓',
+                                              at_someone=from_wxid)
+                            wx_inst.send_img(to_user=from_chatroom_wxid, img_abspath=help_path)
+                        else:
+                            wx_inst.send_text(to_user=from_chatroom_wxid, msg=reply_msage,
+                                              at_someone=from_wxid)
         except:
             pass
 
